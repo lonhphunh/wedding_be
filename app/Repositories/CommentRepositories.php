@@ -50,9 +50,25 @@ class CommentRepositories implements CommentContract
         return Comment::where('parent_id', $uuid)->delete();
     }
 
+    public function countSummaryByUserID(int $id): Model
+    {
+        return Comment::where('user_id', $id)
+            ->whereNull('parent_id')
+            ->where(function ($query) {
+                $query->where('is_admin', false)
+                    ->whereNull('is_admin', 'OR');
+            })
+            ->select([
+                'COUNT(id) AS total_comments',
+                'SUM(CASE WHEN presence = TRUE THEN 1 ELSE 0 END) AS present_count',
+                'SUM(CASE WHEN presence = FALSE THEN 1 ELSE 0 END) AS absent_count'
+            ])
+            ->first();
+    }
+
     public function countCommentByUserID(int $id): int
     {
-        return Comment::where('user_id', $id)->count('id', 'comments')->first()->comments;
+        return Comment::where('user_id', $id)->count('id');
     }
 
     public function countPresenceByUserID(int $id): Model
@@ -63,7 +79,6 @@ class CommentRepositories implements CommentContract
                 $query->where('is_admin', false)
                     ->whereNull('is_admin', 'OR');
             })
-            ->groupBy('user_id')
             ->select([
                 'SUM(CASE WHEN presence = TRUE THEN 1 ELSE 0 END) AS present_count',
                 'SUM(CASE WHEN presence = FALSE THEN 1 ELSE 0 END) AS absent_count'
