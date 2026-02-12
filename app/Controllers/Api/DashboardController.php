@@ -24,13 +24,13 @@ class DashboardController extends Controller
 
     public function stats(CommentContract $comment, LikeContract $like): JsonResponse
     {
-        $comments = $comment->countPresenceByUserID(Auth::id());
+        $summary = $comment->countSummaryByUserID(Auth::id());
 
         return $this->json->successOK([
-            'present' => intval($comments->present_count ?? 0),
-            'absent' => intval($comments->absent_count ?? 0),
+            'present' => intval($summary->present_count ?? 0),
+            'absent' => intval($summary->absent_count ?? 0),
             'likes' => $like->countLikeByUserID(Auth::id()),
-            'comments' => $comment->countCommentByUserID(Auth::id())
+            'comments' => intval($summary->total_comments ?? 0)
         ]);
     }
 
